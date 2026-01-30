@@ -1,30 +1,37 @@
 package com.example.passwordreminder;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.util.concurrent.Executors;
 
-public class EditCredentialActivity extends AppCompatActivity {
+public class EditCredentialActivity extends BaseSecureActivity {
 
     private VaultViewModel vm;
     private long id = -1;
     private Credential loaded;
 
+    private boolean isDirty = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         // ✅ Screenshot + screen record engelle
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE);
+                WindowManager.LayoutParams.FLAG_SECURE
+        );
+
         super.onCreate(savedInstanceState);
 
         if (SessionManager.get().getCurrentUser() == null) {
@@ -47,7 +54,7 @@ public class EditCredentialActivity extends AppCompatActivity {
         id = getIntent().getLongExtra("id", -1);
         boolean isNew = (id <= 0);
 
-        // parola görünür olsun (istersen sadece edit modunda açık yapabiliriz)
+        // Parola görünür olsun
         etPass.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
 
         btnDelete.setVisibility(isNew ? View.GONE : View.VISIBLE);
@@ -61,6 +68,21 @@ public class EditCredentialActivity extends AppCompatActivity {
             etPass.setEnabled(false);
         }
 
+        // ✅ Değişiklik takibi
+        TextWatcher dirtyWatcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                isDirty = true;
+            }
+        };
+
+        etTitle.addTextChangedListener(dirtyWatcher);
+        etUser.addTextChangedListener(dirtyWatcher);
+        etPass.addTextChangedListener(dirtyWatcher);
+
         // düzenleme modunda veriyi yükle
         if (!isNew) {
             Executors.newSingleThreadExecutor().execute(() -> {
@@ -70,15 +92,22 @@ public class EditCredentialActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
                     if (loaded == null) {
-                        Toast.makeText(this, "Kayıt bulunamadı", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditCredentialActivity.this, "Kayıt bulunamadı", Toast.LENGTH_SHORT).show();
                         finish();
                         return;
                     }
+
+                    // setText watcher'ı tetikler, o yüzden setText'ten sonra isDirty'yi sıfırlarız
                     etTitle.setText(loaded.title);
                     etUser.setText(loaded.username);
                     etPass.setText(loaded.password);
+
+                    isDirty = false; // ✅ yükleme sonrası "değişiklik yok" kabul et
                 });
             });
+        } else {
+            // Yeni kayıt ekranı boş açılıyorsa "değişiklik yok" başlasın
+            isDirty = false;
         }
 
         btnSave.setOnClickListener(v -> {
@@ -89,7 +118,7 @@ public class EditCredentialActivity extends AppCompatActivity {
             String p = etPass.getText().toString();
 
             if (t.isEmpty() || u.isEmpty() || p.isEmpty()) {
-                Toast.makeText(this, "Tüm alanlar dolu olmalı", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditCredentialActivity.this, "Tüm alanlar dolu olmalı", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -104,6 +133,7 @@ public class EditCredentialActivity extends AppCompatActivity {
                 vm.getRepo().updateCredential(loaded);
             }
 
+            isDirty = false; // ✅ kaydedildi
             finish();
         });
 
@@ -111,8 +141,31 @@ public class EditCredentialActivity extends AppCompatActivity {
             if (!admin) return;
             if (loaded == null) return;
 
-            vm.getRepo().deleteCredential(loaded);
-            finish();
+            new AlertDialog.Builder(EditCredentialActivity.this)
+                    .setTitle("Silme Onayı")
+                    .setMessage("Bu kaydı silmek istediğinize emin misiniz?\n\n" + loaded.title)
+                    .setPositiveButton("Evet, Sil", (dialog, which) -> {
+                        vm.getRepo().deleteCredential(loaded);
+                        isDirty = false;
+                        finish();
+                    })
+                    .setNegativeButton("İptal", (dialog, which) -> dialog.dismiss())
+                    .show();
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!isDirty) {
+            super.onBackPressed();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Değişiklikler kaydedilmedi")
+                .setMessage("Kaydetmeden çıkmak istiyor musunuz?")
+                .setPositiveButton("Evet, Çık", (d, w) -> finish())
+                .setNegativeButton("Hayır", (d, w) -> d.dismiss())
+                .show();
     }
 }

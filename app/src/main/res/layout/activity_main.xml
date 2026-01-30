@@ -5,6 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <EditText
+        android:id="@+id/etSearch"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:hint="Ara (başlık / kullanıcı adı)"
+        android:inputType="text"
+        android:padding="12dp" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCredentials"
         android:layout_width="match_parent"
@@ -18,6 +26,9 @@
         android:layout_marginTop="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
+
+
 </LinearLayout>
 
 

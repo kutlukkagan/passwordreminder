@@ -30,5 +30,9 @@ public class VaultViewModel extends AndroidViewModel {
     public VaultRepository getRepo() {
         return repo;
     }
+    public LiveData<List<Credential>> search(String q) {
+        return repo.searchCredentials(q);
+    }
+
 }
 

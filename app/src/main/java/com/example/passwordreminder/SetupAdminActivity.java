@@ -11,8 +11,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.concurrent.Executors;
 
-public class SetupAdminActivity extends AppCompatActivity {
-
+public class SetupAdminActivity extends BaseSecureActivity  {
+    @Override
+    protected boolean requiresAuth() {
+        return false;
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 

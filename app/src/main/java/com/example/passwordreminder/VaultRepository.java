@@ -14,6 +14,9 @@ public class VaultRepository {
     public interface LoginCallback {
         void onResult(boolean ok, User user, String error);
     }
+    public LiveData<List<Credential>> searchCredentials(String q) {
+        return credentialDao.search(q);
+    }
 
     private final AppDatabase db;
     private final CredentialDao credentialDao;

@@ -11,8 +11,8 @@ import java.util.List;
 @Dao
 public interface CredentialDao {
 
-    @Query("SELECT * FROM credentials ORDER BY createdAt DESC")
-    LiveData<List<Credential>> observeAll();
+    /* @Query("SELECT * FROM credentials ORDER BY createdAt DESC")
+    LiveData<List<Credential>> observeAll(); */
 
     @Query("SELECT * FROM credentials WHERE id = :id LIMIT 1")
     Credential getById(long id);
@@ -28,4 +28,11 @@ public interface CredentialDao {
 
     @Delete
     int delete(Credential c);
+
+    @Query("SELECT * FROM credentials " +
+            "WHERE title LIKE '%' || :q || '%' OR username LIKE '%' || :q || '%' " +
+            "ORDER BY createdAt DESC")
+    LiveData<List<Credential>> search(String q);
+
+
 }
