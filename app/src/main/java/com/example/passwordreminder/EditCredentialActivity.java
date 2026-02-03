@@ -21,6 +21,7 @@ public class EditCredentialActivity extends BaseSecureActivity {
     private long id = -1;
     private Credential loaded;
 
+    // ✅ Kullanıcı değişiklik yaptı mı?
     private boolean isDirty = false;
 
     @Override
@@ -34,15 +35,36 @@ public class EditCredentialActivity extends BaseSecureActivity {
 
         super.onCreate(savedInstanceState);
 
+        // ✅ Oturum yoksa ekranı kapat
         if (SessionManager.get().getCurrentUser() == null) {
             finish();
             return;
         }
 
+        // ✅ ÖNEMLİ: Önce layout'u set et ki findViewById çalışsın
         setContentView(R.layout.activity_edit_credential);
 
         vm = new ViewModelProvider(this).get(VaultViewModel.class);
 
+        // ✅ Intent'ten id al (yeni kayıt mı, düzenleme mi?)
+        id = getIntent().getLongExtra("id", -1);
+        boolean isNew = (id <= 0);
+
+        // ✅ Toolbar'ı ActionBar olarak bağla (başlık kontrolü için)
+        com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // ✅ Geri ok göster (up button)
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            // ✅ Başlığı set et (burada kesin set ediyoruz)
+            getSupportActionBar().setTitle(isNew ? "Yeni Kayıt" : "Kayıt Düzenle");
+        } else {
+            // nadiren düşer ama fallback
+            toolbar.setTitle(isNew ? "Yeni Kayıt" : "Kayıt Düzenle");
+        }
+
+        // ✅ View'ları bağla
         EditText etTitle = findViewById(R.id.etTitle);
         EditText etUser  = findViewById(R.id.etUser);
         EditText etPass  = findViewById(R.id.etPass);
@@ -51,15 +73,12 @@ public class EditCredentialActivity extends BaseSecureActivity {
 
         boolean admin = SessionManager.get().isAdmin();
 
-        id = getIntent().getLongExtra("id", -1);
-        boolean isNew = (id <= 0);
 
-        // Parola görünür olsun
-        etPass.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-
+        // ✅ Yeni kayıtsa sil butonu yok, save butonu "Kaydet"
         btnDelete.setVisibility(isNew ? View.GONE : View.VISIBLE);
         btnSave.setText(isNew ? "Kaydet" : "Güncelle");
 
+        // ✅ Admin değilse her şeyi kapat
         if (!admin) {
             btnSave.setVisibility(View.GONE);
             btnDelete.setVisibility(View.GONE);
@@ -68,13 +87,11 @@ public class EditCredentialActivity extends BaseSecureActivity {
             etPass.setEnabled(false);
         }
 
-        // ✅ Değişiklik takibi
+        // ✅ Değişiklik takibi (kullanıcı yazarsa isDirty=true)
         TextWatcher dirtyWatcher = new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void afterTextChanged(Editable s) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 isDirty = true;
             }
         };
@@ -83,7 +100,7 @@ public class EditCredentialActivity extends BaseSecureActivity {
         etUser.addTextChangedListener(dirtyWatcher);
         etPass.addTextChangedListener(dirtyWatcher);
 
-        // düzenleme modunda veriyi yükle
+        // ✅ Düzenleme modunda veriyi DB’den yükle
         if (!isNew) {
             Executors.newSingleThreadExecutor().execute(() -> {
                 loaded = AppDatabase.getInstance(getApplicationContext())
@@ -97,19 +114,19 @@ public class EditCredentialActivity extends BaseSecureActivity {
                         return;
                     }
 
-                    // setText watcher'ı tetikler, o yüzden setText'ten sonra isDirty'yi sıfırlarız
+                    // ✅ setText watcher'ı tetikler → bu yüzden sonra isDirty=false yapıyoruz
                     etTitle.setText(loaded.title);
                     etUser.setText(loaded.username);
                     etPass.setText(loaded.password);
 
-                    isDirty = false; // ✅ yükleme sonrası "değişiklik yok" kabul et
+                    isDirty = false; // ✅ yükleme sonrası değişiklik yok kabul
                 });
             });
         } else {
-            // Yeni kayıt ekranı boş açılıyorsa "değişiklik yok" başlasın
-            isDirty = false;
+            isDirty = false; // ✅ yeni ekranda başlangıçta değişiklik yok
         }
 
+        // ✅ Kaydet / Güncelle
         btnSave.setOnClickListener(v -> {
             if (!admin) return;
 
@@ -123,9 +140,11 @@ public class EditCredentialActivity extends BaseSecureActivity {
             }
 
             if (isNew) {
+                // ✅ Yeni kayıt
                 Credential c = new Credential(t, u, p, System.currentTimeMillis());
                 vm.getRepo().insertCredential(c);
             } else {
+                // ✅ Güncelle
                 if (loaded == null) return;
                 loaded.title = t;
                 loaded.username = u;
@@ -137,6 +156,7 @@ public class EditCredentialActivity extends BaseSecureActivity {
             finish();
         });
 
+        // ✅ Sil (onay popup ile)
         btnDelete.setOnClickListener(v -> {
             if (!admin) return;
             if (loaded == null) return;
@@ -154,6 +174,7 @@ public class EditCredentialActivity extends BaseSecureActivity {
         });
     }
 
+    // ✅ Geri tuşu / geri ok için "kaydetmeden çıkış" popup
     @Override
     public void onBackPressed() {
         if (!isDirty) {
@@ -167,5 +188,12 @@ public class EditCredentialActivity extends BaseSecureActivity {
                 .setPositiveButton("Evet, Çık", (d, w) -> finish())
                 .setNegativeButton("Hayır", (d, w) -> d.dismiss())
                 .show();
+    }
+
+    // ✅ Toolbar'daki geri oka basınca da aynı popup çalışsın
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
     }
 }

@@ -1,4 +1,5 @@
 package com.example.passwordreminder;
+
 import androidx.appcompat.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.widget.Toast;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.EditText;
+
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,21 +22,29 @@ public class MainActivity extends BaseSecureActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-
-
-// ✅ Screenshot + screen record engelle
+        // ✅ Screenshot + screen record engelle
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE);
+
         super.onCreate(savedInstanceState);
 
+        // ✅ Oturum yoksa login'e dön
         if (SessionManager.get().getCurrentUser() == null) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
         }
 
+        // ✅ Önce layout'u set et ki findViewById çalışsın
         setContentView(R.layout.activity_main);
+
+        // ✅ Toolbar'ı bağla (başlığı biz kontrol edelim)
+        com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("Kayıtlar");
+        }
 
         vm = new ViewModelProvider(this).get(VaultViewModel.class);
 
@@ -42,13 +52,17 @@ public class MainActivity extends BaseSecureActivity {
 
         RecyclerView rv = findViewById(R.id.rvCredentials);
         Button btnNew = findViewById(R.id.btnNew);
+        EditText etSearch = findViewById(R.id.etSearch);
 
+        // ✅ Admin değilse yeni kayıt pasif
         if (!isAdmin) {
             btnNew.setEnabled(false);
             btnNew.setAlpha(0.4f);
         }
 
+        // ✅ Adapter: güncelle/sil aksiyonları
         CredentialAdapter adapter = new CredentialAdapter(new CredentialAdapter.Actions() {
+
             @Override
             public void onUpdate(Credential c) {
                 if (!isAdmin) return;
@@ -61,9 +75,10 @@ public class MainActivity extends BaseSecureActivity {
             public void onDelete(Credential c) {
                 if (!isAdmin) return;
 
+                // ✅ Silme onayı popup
                 new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Silme Onayı")
-                        .setMessage("Bu kaydı silmek istediğinize emin misiniz?\n\n" + c.title+"\n"+c.username)
+                        .setMessage("Bu kaydı silmek istediğinize emin misiniz?\n\n" + c.title + "\n" + c.username)
                         .setPositiveButton("Evet, Sil", (dialog, which) -> {
                             vm.getRepo().deleteCredential(c);
                             Toast.makeText(MainActivity.this, "Silindi", Toast.LENGTH_SHORT).show();
@@ -74,23 +89,21 @@ public class MainActivity extends BaseSecureActivity {
 
         }, isAdmin);
 
+        // ✅ RecyclerView setup
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setAdapter(adapter);
+        rv.setHasFixedSize(true);
+        // ✅ İlk kaynak: tüm liste
+        currentSource = vm.getCredentials();
+        currentSource.observe(this, adapter::submit);
 
-        vm.getCredentials().observe(this, adapter::submit);
-
+        // ✅ Yeni kayıt butonu
         btnNew.setOnClickListener(v -> {
             if (!isAdmin) return;
             startActivity(new Intent(MainActivity.this, EditCredentialActivity.class));
         });
 
-
-        EditText etSearch = findViewById(R.id.etSearch);
-
-// İlk kaynak: tüm liste
-        currentSource = vm.getCredentials();
-        currentSource.observe(this, adapter::submit);
-
+        // ✅ Arama: yazdıkça observe kaynağını değiştir
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void afterTextChanged(Editable s) {}
@@ -99,23 +112,21 @@ public class MainActivity extends BaseSecureActivity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String q = s.toString().trim();
 
-                // Eski observer'ı kaldır
+                // ✅ Eski observer'ı kaldır
                 if (currentSource != null) {
                     currentSource.removeObservers(MainActivity.this);
                 }
 
-                // Yeni kaynağı seç
+                // ✅ Yeni kaynağı seç
                 if (q.isEmpty()) {
                     currentSource = vm.getCredentials();
                 } else {
                     currentSource = vm.search(q);
                 }
 
-                // Yeni kaynağı bağla
+                // ✅ Yeni kaynağı bağla
                 currentSource.observe(MainActivity.this, adapter::submit);
             }
         });
-
-
     }
 }

@@ -1,9 +1,4 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.PasswordReminder" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-    </style>
-
-    <style name="Theme.PasswordReminder" parent="Base.Theme.PasswordReminder" />
+    <!-- ✅ NoActionBar: aksi halde sistem ActionBar başlığı (app_name) görünebilir -->
+    <style name="Theme.PasswordReminder" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
 </resources>

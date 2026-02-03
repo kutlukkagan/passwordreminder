@@ -1,26 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="16dp"
-    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="18dp">
 
-    <EditText
-        android:id="@+id/etUsername"
+    <!-- ✅ Basit başlık -->
+    <TextView
+        android:id="@+id/tvLoginTitle"
         android:layout_width="match_parent"
-        android:layout_height="57dp"
-        android:hint="Kullanıcı adı" />
+        android:layout_height="wrap_content"
+        android:text="Giriş"
+        android:textStyle="bold"
+        android:textSize="22sp"
+        android:layout_marginBottom="14dp" />
 
-    <EditText
-        android:id="@+id/etPassword"
+    <!-- ✅ Kullanıcı adı alanı (ikonlu) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilUsername"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="wrap_content"
+        android:hint="Kullanıcı adı"
+        app:startIconDrawable="@android:drawable/ic_menu_myplaces"
+        app:boxBackgroundMode="outline">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- ✅ Şifre alanı (ikon + göster/gizle) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:hint="Şifre"
-        android:inputType="textPassword" />
+        app:startIconDrawable="@android:drawable/ic_lock_lock"
+        app:endIconMode="password_toggle"
+        app:boxBackgroundMode="outline">
 
-    <Button
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:maxLines="1" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- ✅ Login butonu -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:text="Giriş" />
+        android:layout_height="52dp"
+        android:layout_marginTop="18dp"
+        android:text="Giriş Yap"
+        app:cornerRadius="14dp" />
+
 </LinearLayout>
