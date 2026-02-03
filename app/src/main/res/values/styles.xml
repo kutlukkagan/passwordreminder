@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ✅ Sil butonu: outlined + kırmızı -->
+    <style name="Widget.PasswordReminder.DangerOutlinedButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <!-- Kenar rengi -->
+        <item name="strokeColor">@color/danger</item>
+        <item name="strokeWidth">2dp</item>
+
+        <!-- Yazı rengi -->
+        <item name="android:textColor">@color/danger</item>
+
+        <!-- Köşe -->
+        <item name="cornerRadius">14dp</item>
+    </style>
+
+
+
+
+
+</resources>

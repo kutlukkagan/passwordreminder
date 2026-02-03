@@ -21,12 +21,48 @@
         android:hint="Ara (başlık / kullanıcı adı)"
         android:padding="12dp" />
 
+    <!-- ✅ Boş durum container: ikon + mesaj -->
+    <LinearLayout
+        android:id="@+id/emptyContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <!-- ✅ İkon -->
+        <ImageView
+            android:id="@+id/ivEmpty"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:contentDescription="empty icon"
+            android:alpha="0.85"
+            android:src="@android:drawable/ic_lock_idle_lock" />
+
+        <!-- ✅ Mesaj -->
+        <TextView
+            android:id="@+id/tvEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:text="Henüz kayıt yok"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+
+
     <!-- ✅ Liste -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCredentials"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:visibility="visible" />
 
     <!-- ✅ Yeni kayıt -->
     <Button

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 🌙 Night mode için daha parlak danger -->
+    <color name="danger">#FF6659</color>
+
+</resources>

@@ -1,23 +1,38 @@
 package com.example.passwordreminder;
 
 import androidx.appcompat.app.AlertDialog;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
+
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.widget.EditText;
 
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.List;
+
 public class MainActivity extends BaseSecureActivity {
 
     private VaultViewModel vm;
-    private androidx.lifecycle.LiveData<java.util.List<Credential>> currentSource;
+
+    // ✅ Arama / normal liste arasında geçiş için active LiveData
+    private LiveData<List<Credential>> currentSource;
+
+    // ✅ UI referansları
+    private TextView tvEmpty;
+    private View emptyContainer;
+    private RecyclerView rv;
+    private EditText etSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +40,8 @@ public class MainActivity extends BaseSecureActivity {
         // ✅ Screenshot + screen record engelle
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE);
+                WindowManager.LayoutParams.FLAG_SECURE
+        );
 
         super.onCreate(savedInstanceState);
 
@@ -36,23 +52,25 @@ public class MainActivity extends BaseSecureActivity {
             return;
         }
 
-        // ✅ Önce layout'u set et ki findViewById çalışsın
+        // ✅ Layout
         setContentView(R.layout.activity_main);
 
-        // ✅ Toolbar'ı bağla (başlığı biz kontrol edelim)
+        // ✅ Toolbar
         com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Kayıtlar");
-        }
+        if (getSupportActionBar() != null) getSupportActionBar().setTitle("Kayıtlar");
 
+        // ✅ ViewModel
         vm = new ViewModelProvider(this).get(VaultViewModel.class);
 
         boolean isAdmin = SessionManager.get().isAdmin();
 
-        RecyclerView rv = findViewById(R.id.rvCredentials);
+        // ✅ UI
+        rv = findViewById(R.id.rvCredentials);
+        emptyContainer = findViewById(R.id.emptyContainer);
+        tvEmpty = findViewById(R.id.tvEmpty);
+        etSearch = findViewById(R.id.etSearch);
         Button btnNew = findViewById(R.id.btnNew);
-        EditText etSearch = findViewById(R.id.etSearch);
 
         // ✅ Admin değilse yeni kayıt pasif
         if (!isAdmin) {
@@ -60,9 +78,8 @@ public class MainActivity extends BaseSecureActivity {
             btnNew.setAlpha(0.4f);
         }
 
-        // ✅ Adapter: güncelle/sil aksiyonları
+        // ✅ Adapter
         CredentialAdapter adapter = new CredentialAdapter(new CredentialAdapter.Actions() {
-
             @Override
             public void onUpdate(Credential c) {
                 if (!isAdmin) return;
@@ -86,24 +103,52 @@ public class MainActivity extends BaseSecureActivity {
                         .setNegativeButton("İptal", (dialog, which) -> dialog.dismiss())
                         .show();
             }
-
         }, isAdmin);
 
-        // ✅ RecyclerView setup
+        // ✅ RecyclerView
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setAdapter(adapter);
-        rv.setHasFixedSize(true);
-        // ✅ İlk kaynak: tüm liste
-        currentSource = vm.getCredentials();
-        currentSource.observe(this, adapter::submit);
+        rv.setHasFixedSize(true); // ✅ ufak performans iyileştirmesi
 
-        // ✅ Yeni kayıt butonu
+        // ✅ Yeni kayıt
         btnNew.setOnClickListener(v -> {
             if (!isAdmin) return;
             startActivity(new Intent(MainActivity.this, EditCredentialActivity.class));
         });
 
-        // ✅ Arama: yazdıkça observe kaynağını değiştir
+        // ✅ Listeyi ekrana basan tek fonksiyon (hem normal hem arama için)
+        java.util.function.Consumer<List<Credential>> render = (list) -> {
+            adapter.submit(list);
+
+            boolean hasData = (list != null && !list.isEmpty());
+            String q = etSearch.getText().toString().trim();
+
+            if (hasData) {
+                // ✅ Veri varsa listeyi göster
+                rv.setVisibility(View.VISIBLE);
+                emptyContainer.setVisibility(View.GONE);
+
+            } else {
+                // ✅ Veri yoksa boş mesaj göster
+
+                rv.setVisibility(View.GONE);
+                emptyContainer.setVisibility(View.VISIBLE);
+
+// ✅ Mesajı arama durumuna göre değiştir
+                if (q.isEmpty()) {
+                    tvEmpty.setText("Henüz kayıt yok");
+                } else {
+                    tvEmpty.setText("Sonuç bulunamadı");
+                }
+
+            }
+        };
+
+        // ✅ İlk kaynak: tüm liste
+        currentSource = vm.getCredentials();
+        currentSource.observe(this, render::accept);
+
+        // ✅ Arama: yazdıkça LiveData kaynağını değiştir
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void afterTextChanged(Editable s) {}
@@ -125,7 +170,7 @@ public class MainActivity extends BaseSecureActivity {
                 }
 
                 // ✅ Yeni kaynağı bağla
-                currentSource.observe(MainActivity.this, adapter::submit);
+                currentSource.observe(MainActivity.this, render::accept);
             }
         });
     }
