@@ -45,9 +45,13 @@ public class SessionManager {
     }
 
     public void logout() {
+        // ✅ kullanıcıyı temizle
         currentUser = null;
-        lastActiveAt = -1;
+
+        // ✅ son aktif zamanı sıfırla (tekrar yanlış expired olmasın)
+        lastActiveAt = 0;
     }
+
 
     // Eğer bazı yerlerde admin kontrolü yapıyorsan yardımcı metot:
     public boolean isAdmin() {

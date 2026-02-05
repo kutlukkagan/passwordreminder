@@ -4,6 +4,8 @@ import androidx.appcompat.app.AlertDialog;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -14,6 +16,7 @@ import android.widget.Toast;
 import android.text.Editable;
 import android.text.TextWatcher;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,7 +28,7 @@ public class MainActivity extends BaseSecureActivity {
 
     private VaultViewModel vm;
 
-    // ✅ Arama / normal liste arasında geçiş için active LiveData
+    // ✅ Arama / normal liste arasında geçiş için aktif LiveData kaynağı
     private LiveData<List<Credential>> currentSource;
 
     // ✅ UI referansları
@@ -33,6 +36,9 @@ public class MainActivity extends BaseSecureActivity {
     private View emptyContainer;
     private RecyclerView rv;
     private EditText etSearch;
+
+    // ✅ Admin kontrolü (menü ve butonlar için kullanacağız)
+    private boolean isAdmin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +53,7 @@ public class MainActivity extends BaseSecureActivity {
 
         // ✅ Oturum yoksa login'e dön
         if (SessionManager.get().getCurrentUser() == null) {
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
+            goLoginAndFinish();
             return;
         }
 
@@ -63,7 +68,8 @@ public class MainActivity extends BaseSecureActivity {
         // ✅ ViewModel
         vm = new ViewModelProvider(this).get(VaultViewModel.class);
 
-        boolean isAdmin = SessionManager.get().isAdmin();
+        // ✅ Yetki
+        isAdmin = SessionManager.get().isAdmin();
 
         // ✅ UI
         rv = findViewById(R.id.rvCredentials);
@@ -108,7 +114,7 @@ public class MainActivity extends BaseSecureActivity {
         // ✅ RecyclerView
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setAdapter(adapter);
-        rv.setHasFixedSize(true); // ✅ ufak performans iyileştirmesi
+        rv.setHasFixedSize(true); // ✅ küçük performans iyileştirmesi
 
         // ✅ Yeni kayıt
         btnNew.setOnClickListener(v -> {
@@ -127,20 +133,17 @@ public class MainActivity extends BaseSecureActivity {
                 // ✅ Veri varsa listeyi göster
                 rv.setVisibility(View.VISIBLE);
                 emptyContainer.setVisibility(View.GONE);
-
             } else {
                 // ✅ Veri yoksa boş mesaj göster
-
                 rv.setVisibility(View.GONE);
                 emptyContainer.setVisibility(View.VISIBLE);
 
-// ✅ Mesajı arama durumuna göre değiştir
+                // ✅ Mesajı arama durumuna göre değiştir
                 if (q.isEmpty()) {
                     tvEmpty.setText("Henüz kayıt yok");
                 } else {
                     tvEmpty.setText("Sonuç bulunamadı");
                 }
-
             }
         };
 
@@ -173,5 +176,53 @@ public class MainActivity extends BaseSecureActivity {
                 currentSource.observe(MainActivity.this, render::accept);
             }
         });
+    }
+
+    // =========================
+    // ✅ Toolbar Menü (Logout / Ayarlar)
+    // =========================
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // ✅ res/menu/menu_main.xml içeriğini toolbar’a basar
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        // ✅ Admin değilse “Ayarlar”ı şimdilik saklayabilirsin (isteğe bağlı)
+        // menu.findItem(R.id.action_settings).setVisible(isAdmin);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+
+        int id = item.getItemId();
+
+        if (id == R.id.action_logout) {
+            // ✅ Logout: session temizle + login'e dön
+            SessionManager.get().logout();
+            goLoginAndFinish();
+            return true;
+        }
+
+        if (id == R.id.action_settings) {
+            // ✅ Şimdilik sadece bilgi veriyoruz
+            Toast.makeText(this, "Ayarlar (yakında)", Toast.LENGTH_SHORT).show();
+
+            // İleride:
+            // startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    // ✅ Login’e dönmek için ortak fonksiyon (kod tekrarını azaltır)
+    private void goLoginAndFinish() {
+        Intent i = new Intent(this, LoginActivity.class);
+        // ✅ Back stack temizlensin ki geri ile tekrar Main açılmasın
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+        finish();
     }
 }
