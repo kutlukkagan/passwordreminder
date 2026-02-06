@@ -26,6 +26,13 @@
             android:label="Kurulum" />
 
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Ayarlar" />
+
+
+
+        <activity
             android:name=".LoginActivity"
             android:exported="true"
             android:label="Giriş">

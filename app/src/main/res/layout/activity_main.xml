@@ -13,13 +13,31 @@
         android:titleTextColor="@android:color/white"
         android:title="Kayıtlar" />
 
-    <!-- ✅ Arama -->
-    <EditText
-        android:id="@+id/etSearch"
+    <!-- ✅ Arama (Material) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Ara (başlık / kullanıcı adı)"
-        android:padding="12dp" />
+        android:layout_margin="12dp"
+        app:boxBackgroundMode="outline"
+        app:startIconDrawable="@drawable/ic_search"
+        app:startIconTint="?attr/colorPrimary"
+        app:endIconMode="clear_text"
+        app:endIconTint="?attr/colorPrimary">
+
+
+
+        <!-- ✅ ID aynı kaldı: MainActivity.java değişmeden çalışır -->
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:maxLines="1" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
 
     <!-- ✅ Boş durum container: ikon + mesaj -->
     <LinearLayout

@@ -21,6 +21,7 @@ public class BaseSecureActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE
         );
+        SessionManager.get().init(getApplicationContext());
         super.onCreate(savedInstanceState);
     }
 

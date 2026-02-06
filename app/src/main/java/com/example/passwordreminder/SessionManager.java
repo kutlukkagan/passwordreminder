@@ -1,11 +1,19 @@
 package com.example.passwordreminder;
 
+import android.content.Context;
+
 public class SessionManager {
 
     private static SessionManager INSTANCE;
 
+
+
+    // ✅ Uygulama context'i (timeout prefs okumak için)
+    private Context appCtx;
+
     private User currentUser;
-    private long lastActiveAt = -1;
+    private long lastActiveAt = 0L;
+
 
     // 2 dakika
     private static final long TIMEOUT_MS = 2 * 60 * 1000L;
@@ -23,7 +31,24 @@ public class SessionManager {
 
     public void setCurrentUser(User u) {
         this.currentUser = u;
-        touch(); // ✅ login olur olmaz zamanı set et
+        touch(); // ✅ login olur olmaz aktif zamanı set et
+    }
+
+    /**
+     * ✅ Tek sefer init et (BaseSecureActivity içinde çağıracağız)
+     */
+    public void init(Context ctx) {
+        if (appCtx == null) {
+            appCtx = ctx.getApplicationContext();
+        }
+    }
+    public void logout() {
+        // ✅ kullanıcıyı temizle
+        currentUser = null;
+        // ✅ son aktif zamanı sıfırla
+        lastActiveAt = 0L;
+
+
     }
 
     public void touch() {
@@ -31,26 +56,17 @@ public class SessionManager {
     }
 
     public boolean isExpired() {
-        // session yoksa expired
         if (currentUser == null) return true;
+        if (lastActiveAt <= 0) return true;
 
-        // ilk girişte lastActiveAt set edilmemişse set et, expired sayma
-        if (lastActiveAt <= 0) {
-            lastActiveAt = System.currentTimeMillis();
-            return false;
-        }
 
         long now = System.currentTimeMillis();
+        // ✅ Context yoksa (init edilmediyse) varsayılan 2dk kabul et
+        long timeoutMs = (appCtx != null) ? SettingsPrefs.getTimeoutMs(appCtx) : (2 * 60L * 1000L);
         return (now - lastActiveAt) > TIMEOUT_MS;
     }
 
-    public void logout() {
-        // ✅ kullanıcıyı temizle
-        currentUser = null;
 
-        // ✅ son aktif zamanı sıfırla (tekrar yanlış expired olmasın)
-        lastActiveAt = 0;
-    }
 
 
     // Eğer bazı yerlerde admin kontrolü yapıyorsan yardımcı metot:
